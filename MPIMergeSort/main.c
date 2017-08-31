@@ -54,13 +54,14 @@ int main(int argc, char** argv) {
     
     printf("Bienvenido! Digite la dimension del vector:\n");
     scanf("%d",n);
-    printf("Se generaran %d numeros aleatorios entre un rango entre 0 y m. Defina m:\n");
+    printf("Se generarán %d numeros aleatorios entre un rango entre 0 y m. Defina m:\n",n);
     scanf("%d",m);
     
     int* mainVector = inicializaVector(n);
     
+    Genera_vector(mainVector);
     
-    int n[] = {9,8,7,6,5,4,3,11,2,1,2,1,4,6,8,53,789,21,67,354,456};
+    
     
     mergeSort(n, sizeof(n)/sizeof(int));
     
