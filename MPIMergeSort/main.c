@@ -57,17 +57,35 @@ int main(int argc, char** argv) {
     printf("Se generarán %d numeros aleatorios entre un rango entre 0 y m. Defina m:\n",n);
     scanf("%d",m);
     
-    int* mainVector = inicializaVector(n);
+    int* mainVector = inicializaVector(n);          //Se inicializa el vector
+    Genera_vector(mainVector, m);                   //Se le asignan valores aleatorios
     
-    Genera_vector(mainVector);
+    MPI_Init(&arc, &argv);                          /** Inicializacion del ambiente MPI
+                                                     */
+    
+    MPI_Comm_size(MPI_COMM_WORLD, &p);              /*Se le pide al comunicador MPI_COMM_WORLD que
+                                                     * almacene en p el numero de procesos de ese comunicador.
+                                                     * O sea para este caso, p indicara el num total de procesos que corresponde.
+                                                     */
+    
+    
+    MPI_Comm_rank(MPI_COMM_WORLD, &my_rank);        /* Se el pide al comunicador MPI_COMM_WORLD que devuelva en la variable
+                                                     * my_rank la identificacion del proceso "llamador",
+                                                     * la identificacion es un numero de 0 a p-1.
+                                                     */
     
     
     
-    mergeSort(n, sizeof(n)/sizeof(int));
     
+    mergeSort(n, sizeof(n)/sizeof(int));            //Se aplica algoritmo de ordenamiento MergeSort
+    
+    
+    //MONITOR
     for (int i = 0; i < sizeof(n)/sizeof(int); i++){
         printf("%d ", n[i]);
     }
+    
+    MPI_Finalize();   /* Se termina el ambiente MPI */
     return (EXIT_SUCCESS);
 }
 
