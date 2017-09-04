@@ -122,8 +122,8 @@ int main(int argc, char** argv) {
                     sub_arreglo = merge(sub_arreglo, temporal, tamano, tamano); //se mezclan ordenadamente los arreglos
                     tamano += tamano;//nuevo tamano del arreglo
                 }
-                switcher = !switcher; //se alterna
             }
+            switcher = !switcher; //se alterna
         }
         diferencia += diferencia;//Aumenta la diferencia entre cada nivel del arbol
     }
