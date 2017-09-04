@@ -14,7 +14,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "mpi.h"
-#include "math.h"
+#include <math.h>
 
 /*
  * 
@@ -28,7 +28,9 @@ int main(int argc, char** argv) {
     //Definicion de metodos.
     int* mergeSortAux(int* list, int inicial, int final);
     int* mergeSort(int *list, int n);
+    int * merge(int * list1, int * list2, int n1, int n2);
     void Genera_vector(int v[], int m);
+    void Genera_vector_aleatorio(int v[], int m, int n);
     int* inicializaVector(int numero);
     int  esPotencia(int n);
     
@@ -60,7 +62,7 @@ int main(int argc, char** argv) {
         scanf("%d",m);
     
         mainVector = inicializaVector(n);               //Se define el vector
-        Genera_vector(mainVector, m);                   //Se le asignan valores aleatorios
+        Genera_vector_aleatorio(mainVector, m, n);      //Se le asignan valores aleatorios
         
         //MONITOR
         printf("Vector por ordenar: ");
@@ -179,6 +181,17 @@ void Genera_vector(
       int    i;
       for (i = 0; i < m; i++)
         v[i]= (int)rand()/(int)(((unsigned)RAND_MAX + 1) / 10);
+                
+ }  /* Genera_vector */
+
+void Genera_vector_aleatorio(
+         int    v[]        /* out */,
+         int    m          /* in  */,
+         int    n          /* size */)
+{
+      int    i;
+      for (i = 0; i < n; i++)
+        v[i]= (int)rand() % m;
                 
  }  /* Genera_vector */
 
