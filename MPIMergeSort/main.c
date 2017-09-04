@@ -21,25 +21,17 @@
  */
 int main(int argc, char** argv) {
     
-    int n, m;           //n: Longitud del vector    m: Limite maximo de los numeros
-    
+    int n, m, p, my_rank;           //n: Longitud del vector    m: Limite maximo de los numeros //variables para el comm_size y comm_rank
+    int * mainVector;
+    int * sub_arreglo;              //Se inicializa el vector
     //Definicion de metodos.
     int* mergeSortAux(int* list, int inicial, int final);
     int* mergeSort(int *list, int n);
     void Genera_vector(int v[], int m);
     int* inicializaVector(int numero);
-    int p, my_rank;     //variables para el comm_size y comm_rank
+    int  esPotencia(int n);
     
-    
-    printf("Bienvenido! Digite la dimension del vector:\n");
-    scanf("%d",n);
-    printf("Se generarán %d numeros aleatorios entre un rango entre 0 y m. Defina m:\n",n);
-    scanf("%d",m);
-    
-    int* mainVector = inicializaVector(n);          //Se inicializa el vector
-    Genera_vector(mainVector, m);                   //Se le asignan valores aleatorios
-    
-    MPI_Init(&arc, &argv);                          /** Inicializacion del ambiente MPI
+    MPI_Init(&argc, &argv);                          /** Inicializacion del ambiente MPI
                                                      */
     
     MPI_Comm_size(MPI_COMM_WORLD, &p);              /*Se le pide al comunicador MPI_COMM_WORLD que
@@ -53,22 +45,67 @@ int main(int argc, char** argv) {
                                                      * la identificacion es un numero de 0 a p-1.
                                                      */
     
-    int tamano = n/p;          //Se divide el array en tamaños iguales
+    if (my_rank == 0){
+        //Suponiendo que el numero sea potencia de 2
+        int flagPotencia = 1;
+        printf("Bienvenido! Digite la dimension del vector (potencia de 2):\n");
+        do {
+            scanf("%d",&n);
+            if (esPotencia(n)) flagPotencia = 0;
+            else printf("Por favor, digite una cantidad potencia de 2.\n");
+        } while (flagPotencia);
+    
+        printf("Se generarán %d numeros aleatorios entre un rango entre 0 y m. Defina m:\n",n);
+        scanf("%d",m);
+    
+        mainVector = inicializaVector(n);               //Se define el vector
+        Genera_vector(mainVector, m);                   //Se le asignan valores aleatorios
+        
+        //MONITOR
+        printf("Vector por ordenar: ");
+        for (int i = 0; i < n; i++){
+            printf("%d ", mainVector[i]);
+        }
+        printf("\n");
+    }
+    
+    MPI_Bcast(&n, 1, MPI_INT, 0, MPI_COMM_WORLD); /* Se hace un BROADCAST desde proceso 0 (raiz) 
+                                                      a todos los procesos - incluyendo a el mismo- 
+                                                      del valor de n 
+                                                      Note que el MPI_Bcast hace que cada uno de los procesos 
+                                                      espere hasta recibir lo que se les  envia*/
+    
+    int tamano = n/p;                               //Se calcula el tamano de los vectores particulares
     
     //se manda cada subarreglo a cada proceso
-    int *sub_arreglo = malloc(tamano * sizeof(int));
+    sub_arreglo = inicializaVector(tamano);
+    
     MPI_Scatter(mainVector, tamano, MPI_INT, sub_arreglo, tamano, MPI_INT, 0, MPI_COMM_WORLD);
     
-    //se ejecuta el mergesort en cada proceso
-    mergeSort(sub_arreglo, sizeof(n)/sizeof(int));
+    printf("Proceso #%d Arreglo sin ordenar: ", my_rank);
+    for (int i = 0; i < tamano; i++){
+        printf("%d ", sub_arreglo[i]);
+    }
+    printf("\n");
     
-    //se juntan todos los subarreglos en uno
+    //se ejecuta el mergesort en cada proceso
+    //mergeSort(sub_arreglo, sizeof(n)/sizeof(int));
+    mergeSort(sub_arreglo, tamano);
+    
+    //MONITOR
+    printf("Proceso #%d Arreglo ordenado: ", my_rank);
+    for (int i = 0; i < tamano; i++){
+        printf("%d ", sub_arreglo[i]);
+    }
+    printf("\n");
+    
+   /* //se juntan todos los subarreglos en uno
     int *ordenados = NULL;
     if (my_rank == 0){
         ordenados = malloc(n * sizeof(int));
     }
     MPI_Gather(sub_arreglo, tamano, MPI_INT, ordenados, tamano, MPI_INT, 0, MPI_COMM_WORLD);
-    
+    */
     
     //REQUERIMIENTOS NO COMPLETADOS
     
@@ -79,16 +116,28 @@ int main(int argc, char** argv) {
     //4.    Se itera hasta que solo hayan dos procesos.
     //5.    Se mezclan los dos, listo.
     
-    mergeSort(n, sizeof(n)/sizeof(int));            //Se aplica algoritmo de ordenamiento MergeSort
+    /*mergeSort(n, sizeof(n)/sizeof(int));            //Se aplica algoritmo de ordenamiento MergeSort
+    */
     
     
-    //MONITOR
-    for (int i = 0; i < sizeof(n)/sizeof(int); i++){
-        printf("%d ", n[i]);
-    }
     
     MPI_Finalize();   /* Se termina el ambiente MPI */
     return (EXIT_SUCCESS);
+}
+
+int  esPotencia(int n){
+    
+    int result = 0;
+    for (int i = 0; i < sizeof(int) * 8; i++){
+        if (n & 1)
+            result++;
+        n = n >> 1;
+    }
+    if (result == 1) 
+        return 1;
+    else 
+        return 0;
+        
 }
 
 void Genera_vector(
