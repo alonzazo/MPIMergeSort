@@ -82,7 +82,7 @@ int main(int argc, char** argv) {
     
     MPI_Scatter(mainVector, tamano, MPI_INT, sub_arreglo, tamano, MPI_INT, 0, MPI_COMM_WORLD);
     
-    printf("Proceso #%d Arreglo sin ordenar: ", my_rank);
+    printf("Proceso #%d Arreglo sin ordenado: ", my_rank);
     for (int i = 0; i < tamano; i++){
         printf("%d ", sub_arreglo[i]);
     }
