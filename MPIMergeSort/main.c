@@ -14,7 +14,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "mpi.h"
-
+#include "math.h"
 
 /*
  * 
@@ -24,6 +24,7 @@ int main(int argc, char** argv) {
     int n, m, p, my_rank;           //n: Longitud del vector    m: Limite maximo de los numeros //variables para el comm_size y comm_rank
     int * mainVector;
     int * sub_arreglo;              //Se inicializa el vector
+    MPI_Status status;
     //Definicion de metodos.
     int* mergeSortAux(int* list, int inicial, int final);
     int* mergeSort(int *list, int n);
@@ -99,6 +100,31 @@ int main(int argc, char** argv) {
     }
     printf("\n");
     
+    /*0:        0
+     *1:    0       4
+     *2:  0   2   4   6
+     *3: 0 1 2 3 4 5 6 7    
+     * Notese que el logaritmo base 2 indica la cantidad de niveles del arbol binario.
+     */
+    int nivelesDelArbol = (int)log2((double)p);
+    int diferencia = 1;
+    for (int i = 0; i < nivelesDelArbol; i++){                  //Recorre el arbol verticalmente
+        int switcher = 0;                                       //flag que alterna quien envia y quien recibe
+        for (int j = 0; j < p; j += diferencia){                //Recorre el arbol horizontalmente en saltos de 'diferencia'
+            if (my_rank == j){                                  //Selecciona el proceso que corresponde
+                if (switcher){
+                    MPI_Send(&sub_arreglo, tamano, MPI_INT, j - diferencia, 25, MPI_COMM_WORLD);//Envia el subarreglo
+                } else {
+                    int * temporal = inicializaVector(tamano); //Crea un vector temporal para almacenar el arreglo que se recibe
+                    MPI_Recv(&temporal, tamano, MPI_INT, j + diferencia, 25, MPI_COMM_WORLD, &status); // Se recibe el arreglo
+                    sub_arreglo = merge(sub_arreglo, temporal, tamano, tamano); //se mezclan ordenadamente los arreglos
+                    tamano += tamano;//nuevo tamano del arreglo
+                }
+                switcher = !switcher; //se alterna
+            }
+        }
+        diferencia += diferencia;//Aumenta la diferencia entre cada nivel del arbol
+    }
    /* //se juntan todos los subarreglos en uno
     int *ordenados = NULL;
     if (my_rank == 0){
@@ -119,7 +145,13 @@ int main(int argc, char** argv) {
     /*mergeSort(n, sizeof(n)/sizeof(int));            //Se aplica algoritmo de ordenamiento MergeSort
     */
     
-    
+    if(my_rank == 0){
+    printf("Proceso #%d ARREGLO FINAL: ", my_rank);
+        for (int i = 0; i < tamano; i++){
+            printf("%d ", sub_arreglo[i]);
+        }
+        printf("\n");
+    }
     
     MPI_Finalize();   /* Se termina el ambiente MPI */
     return (EXIT_SUCCESS);
@@ -191,4 +223,20 @@ int* mergeSortAux(int* list, int inicial, int final){//O(n log n)
 
 int* mergeSort(int *list, int n){                           //Patron de funcion auxiliar
     return mergeSortAux(list, 0, n);
+}
+
+int * merge(int * list1, int * list2, int n1, int n2){
+    int * resultList = inicializaVector(n1 + n2);           //Contenedor parcial                             
+    int i = 0, j = 0;                                       //Apuntadores
+    while (i + j < n1 + n2){
+        if (j == n2 || (i < n1 && list1[i] < list2[j])){//Agrega a la lista parcial los valores menores entre los apuntadores.
+            resultList[i + j] = list1[i];//Se le quita inicial y mitad para eliminar bias en listaParcial.
+            i++;
+        }
+        else {
+            resultList[i + j] = list2[j];//Se le quita inicial y mitad para eliminar bias en listaParcial.
+            j++;
+        }
+    }
+    return resultList;
 }
