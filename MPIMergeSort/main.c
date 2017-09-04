@@ -28,6 +28,7 @@ int main(int argc, char** argv) {
     int* mergeSort(int *list, int n);
     void Genera_vector(int v[], int m);
     int* inicializaVector(int numero);
+    int p, my_rank;     //variables para el comm_size y comm_rank
     
     
     printf("Bienvenido! Digite la dimension del vector:\n");
@@ -51,6 +52,22 @@ int main(int argc, char** argv) {
                                                      * my_rank la identificacion del proceso "llamador",
                                                      * la identificacion es un numero de 0 a p-1.
                                                      */
+    
+    int tamano = n/p;          //Se divide el array en tamaños iguales
+    
+    //se manda cada subarreglo a cada proceso
+    int *sub_arreglo = malloc(tamano * sizeof(int));
+    MPI_Scatter(mainVector, tamano, MPI_INT, sub_arreglo, tamano, MPI_INT, 0, MPI_COMM_WORLD);
+    
+    //se ejecuta el mergesort en cada proceso
+    mergeSort(sub_arreglo, sizeof(n)/sizeof(int));
+    
+    //se juntan todos los subarreglos en uno
+    int *ordenados = NULL;
+    if (my_rank == 0){
+        ordenados = malloc(n * sizeof(int));
+    }
+    MPI_Gather(sub_arreglo, tamano, MPI_INT, ordenados, tamano, MPI_INT, 0, MPI_COMM_WORLD);
     
     
     //REQUERIMIENTOS NO COMPLETADOS
