@@ -64,14 +64,16 @@ int main(int argc, char** argv) {
         } while (flagPotencia);
     
         printf("Se generarán %d numeros aleatorios entre un rango entre 0 y m. Defina m:\n",n);
-        scanf("%d",m);
+        scanf("%d",&m);
     
         mainVector = inicializaVector(n);               //Se define el vector
 		
-	//se inicia el temporizador
-	comienzo = clock();
+	
 		
         Genera_vector_aleatorio(mainVector, m, n);      //Se le asignan valores aleatorios
+        
+        //se inicia el temporizador
+	comienzo = clock();
         
         //MONITOR
         printf("Vector por ordenar: ");
@@ -94,18 +96,17 @@ int main(int argc, char** argv) {
     
     MPI_Scatter(mainVector, tamano, MPI_INT, sub_arreglo, tamano, MPI_INT, 0, MPI_COMM_WORLD);
     
-    printf("Proceso #%d Arreglo sin ordenado: ", my_rank);
+    printf("Proceso #%d Arreglo no ordenado: ", my_rank);
     for (int i = 0; i < tamano; i++){
         printf("%d ", sub_arreglo[i]);
     }
-    printf("\n");
     
     //se ejecuta el mergesort en cada proceso
     //mergeSort(sub_arreglo, sizeof(n)/sizeof(int));
     mergeSort(sub_arreglo, tamano);
     
     //MONITOR
-    printf("Proceso #%d Arreglo ordenado: ", my_rank);
+    printf("Arreglo ordenado: ");
     for (int i = 0; i < tamano; i++){
         printf("%d ", sub_arreglo[i]);
     }
@@ -117,6 +118,7 @@ int main(int argc, char** argv) {
      *3: 0 1 2 3 4 5 6 7    
      * Notese que el logaritmo base 2 indica la cantidad de niveles del arbol binario.
      */
+    //int * temporal;
     int nivelesDelArbol = (int)log2((double)p);
     int diferencia = 1;
     for (int i = 0; i < nivelesDelArbol; i++){                  //Recorre el arbol verticalmente
@@ -124,12 +126,27 @@ int main(int argc, char** argv) {
         for (int j = 0; j < p; j += diferencia){                //Recorre el arbol horizontalmente en saltos de 'diferencia'
             if (my_rank == j){                                  //Selecciona el proceso que corresponde
                 if (switcher){
-                    MPI_Send(&sub_arreglo, tamano, MPI_INT, j - diferencia, 25, MPI_COMM_WORLD);//Envia el subarreglo
+                    MPI_Send(sub_arreglo, tamano, MPI_INT, j - diferencia, 0, MPI_COMM_WORLD);//Envia el subarreglo
+                
+                    /* MONITOR
+                    printf("Proceso #%d Envio a %d arreglo: ", my_rank, j-diferencia);
+                    for (int i = 0; i < tamano; i++){
+                        printf("%d ", sub_arreglo[i]);
+                    }
+                    printf("\n");*/
                 } else {
-                    int * temporal = inicializaVector(tamano); //Crea un vector temporal para almacenar el arreglo que se recibe
-                    MPI_Recv(&temporal, tamano, MPI_INT, j + diferencia, 25, MPI_COMM_WORLD, &status); // Se recibe el arreglo
+                    int temporal[tamano];
+                    //temporal = inicializaVector(tamano); //Crea un vector temporal para almacenar el arreglo que se recibe
+                    MPI_Recv(&temporal, tamano, MPI_INT, j + diferencia, 0, MPI_COMM_WORLD, &status); // Se recibe el arreglo
                     sub_arreglo = merge(sub_arreglo, temporal, tamano, tamano); //se mezclan ordenadamente los arreglos
                     tamano += tamano;//nuevo tamano del arreglo
+                    
+                    /*MONITOR
+                    printf("Proceso #%d Recibio de %d arreglo: ", my_rank, j + diferencia);
+                    for (int i = 0; i < tamano; i++){
+                        printf("%d ", sub_arreglo[i]);
+                    }
+                    printf("\n");*/
                 }
             }
             switcher = !switcher; //se alterna
@@ -157,18 +174,23 @@ int main(int argc, char** argv) {
     */
     
     if(my_rank == 0){
-    printf("Proceso #%d ARREGLO FINAL: ", my_rank);
+        //termina el temporizador
+        dif = clock() - comienzo;
+        int msec = dif * 1000 / CLOCKS_PER_SEC;
+        
+        printf("Proceso #%d ARREGLO FINAL: ", my_rank);
         for (int i = 0; i < tamano; i++){
             printf("%d ", sub_arreglo[i]);
         }
         printf("\n");
+        
+        
     }
     
-    MPI_Finalize();   /* Se termina el ambiente MPI */
+    /**/
 	
-    //termina el temporizador
-    dif = clock() - comienzo;
-    int msec = dif * 1000 / CLOCKS_PER_SEC;
+    
+    
 	
     /* Despliega en pantalla el numero de veces que aparecia
      * en la lista cada uno de los posibles valores
@@ -205,7 +227,8 @@ int main(int argc, char** argv) {
     printf("El número de procesos fue de: %d\n", p);
     printf("La longitud del vector fue de: %d\n", n);
     printf("Se trabajó con un rango de 0 a %d\n", m);
-	
+
+    MPI_Finalize();   /* Se termina el ambiente MPI */
     return (EXIT_SUCCESS);
 }
 
