@@ -96,21 +96,21 @@ int main(int argc, char** argv) {
     
     MPI_Scatter(mainVector, tamano, MPI_INT, sub_arreglo, tamano, MPI_INT, 0, MPI_COMM_WORLD);
     
-    printf("Proceso #%d Arreglo no ordenado: ", my_rank);
+    /*printf("Proceso #%d Arreglo no ordenado: ", my_rank);
     for (int i = 0; i < tamano; i++){
         printf("%d ", sub_arreglo[i]);
-    }
+    }*/
     
     //se ejecuta el mergesort en cada proceso
     //mergeSort(sub_arreglo, sizeof(n)/sizeof(int));
     mergeSort(sub_arreglo, tamano);
     
     //MONITOR
-    printf("Arreglo ordenado: ");
+    /*printf("Arreglo ordenado: ");
     for (int i = 0; i < tamano; i++){
         printf("%d ", sub_arreglo[i]);
     }
-    printf("\n");
+    printf("\n");*/
     
     /*0:        0
      *1:    0       4
@@ -174,28 +174,34 @@ int main(int argc, char** argv) {
     */
     
     if(my_rank == 0){
-        //termina el temporizador
-        dif = clock() - comienzo;
-        int msec = dif * 1000 / CLOCKS_PER_SEC;
         
+    
         printf("Proceso #%d ARREGLO FINAL: ", my_rank);
         for (int i = 0; i < tamano; i++){
             printf("%d ", sub_arreglo[i]);
         }
         printf("\n");
         
+        //termina el temporizador
+        dif = clock() - comienzo;
+        int msec = dif * 1000 / CLOCKS_PER_SEC;
+         // El tiempo que tardó el ordenamiento
+        printf("El programa tardó %d milisegundos en hacer el ordenamiento\n", msec);
         
+        //los valores de p, n y m	
+        printf("El número de procesos fue de: %d\n", p);
+        printf("La longitud del vector fue de: %d\n", n);
+        printf("Se trabajó con un rango de 0 a %d\n", m);
     }
     
     /**/
-	
     
     
 	
     /* Despliega en pantalla el numero de veces que aparecia
      * en la lista cada uno de los posibles valores
      */
-    int i = 0, j = 0;
+    /*int i = 0, j = 0;
     int conteo = 0;
     while(j <= m){
         if(mainVector[i] == j){
@@ -209,24 +215,9 @@ int main(int argc, char** argv) {
 	i++;
     }
     printf("\n");
-    printf("\n");
-	
-    // La lista ordenada de los valores
-    for(int k = 0; k < n; k++){
-        printf("%d  ", mainVector[k]);
-    }
-    printf("\n");
-    printf("\n");
+    printf("\n");*/
 	 
-    // El tiempo que tardó el ordenamiento
-    printf("El programa tardó %d milisegundos en hacer el ordenamiento", msec);
-    printf("\n");
-    printf("\n");
-	 
-    //los valores de p, n y m	
-    printf("El número de procesos fue de: %d\n", p);
-    printf("La longitud del vector fue de: %d\n", n);
-    printf("Se trabajó con un rango de 0 a %d\n", m);
+    
 
     MPI_Finalize();   /* Se termina el ambiente MPI */
     return (EXIT_SUCCESS);
