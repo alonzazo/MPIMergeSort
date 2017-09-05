@@ -15,6 +15,7 @@
 #include <stdlib.h>
 #include "mpi.h"
 #include <math.h>
+#include <time.h>
 
 /*
  * 
@@ -25,6 +26,10 @@ int main(int argc, char** argv) {
     int * mainVector;
     int * sub_arreglo;              //Se inicializa el vector
     MPI_Status status;
+	
+    //definicion de variables para el reloj
+    clock_t comienzo, dif;
+	
     //Definicion de metodos.
     int* mergeSortAux(int* list, int inicial, int final);
     int* mergeSort(int *list, int n);
@@ -62,6 +67,10 @@ int main(int argc, char** argv) {
         scanf("%d",m);
     
         mainVector = inicializaVector(n);               //Se define el vector
+		
+	//se inicia el temporizador
+	comienzo = clock();
+		
         Genera_vector_aleatorio(mainVector, m, n);      //Se le asignan valores aleatorios
         
         //MONITOR
@@ -156,6 +165,47 @@ int main(int argc, char** argv) {
     }
     
     MPI_Finalize();   /* Se termina el ambiente MPI */
+	
+    //termina el temporizador
+    dif = clock() - comienzo;
+    int msec = dif * 1000 / CLOCKS_PER_SEC;
+	
+    /* Despliega en pantalla el numero de veces que aparecia
+     * en la lista cada uno de los posibles valores
+     */
+    int i = 0, j = 0;
+    int conteo = 0;
+    while(j <= m){
+        if(mainVector[i] == j){
+		conteo++;
+        }
+	else if (mainVector[i] > j){
+            printf ("El valor %d se ha encontrado %d veces\n", j, conteo);
+		j++;
+                conteo = 0;
+	}
+	i++;
+    }
+    printf("\n");
+    printf("\n");
+	
+    // La lista ordenada de los valores
+    for(int k = 0; k < n; k++){
+        printf("%d  ", mainVector[k]);
+    }
+    printf("\n");
+    printf("\n");
+	 
+    // El tiempo que tardó el ordenamiento
+    printf("El programa tardó %d milisegundos en hacer el ordenamiento", msec);
+    printf("\n");
+    printf("\n");
+	 
+    //los valores de p, n y m	
+    printf("El número de procesos fue de: %d\n", p);
+    printf("La longitud del vector fue de: %d\n", n);
+    printf("Se trabajó con un rango de 0 a %d\n", m);
+	
     return (EXIT_SUCCESS);
 }
 
